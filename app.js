@@ -1,20 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
-const path = require('path');
+const apikeys = require('./api.json');
+const SCOPE = ['https://www.googleapis.com/auth/drive'];
 const fs = require('fs');
-const awsServerlessExpress = require('aws-serverless-express');
-require('dotenv').config(); // Load environment variables from .env file
+const path = require('path');
 
 const app = express();
 app.use(cors());
 
-const IMAGES_DIR = '/tmp/images';
-
-// Create the images directory if it doesn't exist
-if (!fs.existsSync(IMAGES_DIR)) {
-    fs.mkdirSync(IMAGES_DIR);
-}
+const IMAGES_DIR = '/tmp/images'; // Store images in /tmp directory for AWS Lambda
 
 // Create the images directory if it doesn't exist
 if (!fs.existsSync(IMAGES_DIR)) {
@@ -23,10 +18,10 @@ if (!fs.existsSync(IMAGES_DIR)) {
 
 async function authorize() {
     const jwtClient = new google.auth.JWT(
-        process.env.CLIENT_EMAIL,
+        apikeys.client_email,
         null,
-        process.env.PRIVATE_KEY.replace(/\\n/g, '\n'), // Replace escaped newlines
-        ['https://www.googleapis.com/auth/drive']
+        apikeys.private_key,
+        SCOPE
     );
     await jwtClient.authorize();
     return jwtClient;
@@ -36,7 +31,7 @@ async function listFiles(authClient, folderId) {
     const drive = google.drive({ version: 'v3', auth: authClient });
     const res = await drive.files.list({
         q: `'${folderId}' in parents`,
-        fields: 'files(id, name)', // Include file name field
+        fields: 'files(id, name, webContentLink)', // Include webContentLink field
     });
     return res.data.files;
 }
@@ -61,33 +56,28 @@ async function downloadFile(authClient, fileId, dest) {
     );
 }
 
-app.get('/', (req, res) => {    
-    res.send('Google drive api!');
-});
-
 app.get('/api/images', async (req, res) => {
     try {
         const authClient = await authorize();
-        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // Replace with your folder's ID
+        const folderId = '1l2wv2kbFj4J7-LVTVfH7_T0ECvJAbsXm'; // Replace with your folder's ID
         const imageFiles = await listFiles(authClient, folderId);
 
-        // Map the imageFiles array to include the shareable link
-        const fileUrls = imageFiles.map(file => ({
-            id: file.id,
-            name: file.name,
-            url: file.webViewLink || file.webContentLink // Use either webViewLink or webContentLink
-        }));
+        // Download each file to the local images directory
+        for (const file of imageFiles) {
+            const dest = path.join(IMAGES_DIR, file.name);
+            if (!fs.existsSync(dest)) {
+                await downloadFile(authClient, file.id, dest);
+            }
+        }
 
-        res.json(fileUrls);
+        res.json(imageFiles);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-
 // Serve the images statically from the images directory
 app.use('/images', express.static(IMAGES_DIR));
 
-// Export the Express.js app
-module.exports = app;
+module.exports = app; // Export the Express app for serverless deployment
