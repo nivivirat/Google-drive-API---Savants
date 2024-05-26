@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
     "googleapi": "^1.0.2",
-    "googleapis": "^137.1.0"
+    "googleapis": "^137.1.0",
+    "serverless-http": "^2.6.1"
   }
 }
