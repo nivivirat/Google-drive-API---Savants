@@ -3,6 +3,7 @@ const cors = require('cors');
 const { google } = require('googleapis');
 const path = require('path');
 const fs = require('fs');
+const awsServerlessExpress = require('aws-serverless-express');
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -87,7 +88,10 @@ app.get('/api/images', async (req, res) => {
 // Serve the images statically from the images directory
 app.use('/images', express.static(IMAGES_DIR));
 
-const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Wrap the Express app with aws-serverless-express
+const server = awsServerlessExpress.createServer(app);
+
+// Export the handler function for AWS Lambda
+exports.handler = (event, context) => {
+    awsServerlessExpress.proxy(server, event, context);
+};
