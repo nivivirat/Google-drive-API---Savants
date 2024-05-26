@@ -8,7 +8,7 @@ const path = require('path');
 
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:5173' // Replace this with your frontend's origin
+    origin: 'http://localhost:5173/photos' // Replace this with your frontend's origin
   }));  
 
 const IMAGES_DIR = '/tmp/images'; // Store images in /tmp directory for AWS Lambda
