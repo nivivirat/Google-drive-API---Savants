@@ -1,0 +1,23 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "api/images.js",
+        "use": "@vercel/node"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/api/images",
+        "dest": "/api/images.js"
+      }
+    ],
+    "env": {
+      "PRIVATE_KEY_ID": "@private_key_id",
+      "PRIVATE_KEY": "@private_key",
+      "CLIENT_EMAIL": "@client_email",
+      "CLIENT_ID": "@client_id",
+      "PROJECT_ID": "@project_id"
+    }
+  }
+  
