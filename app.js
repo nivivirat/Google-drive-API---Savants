@@ -55,6 +55,10 @@ async function downloadFile(authClient, fileId, dest) {
     );
 }
 
+app.get('/', (req, res) => {    
+    res.send('Google drive api!');
+});
+
 app.get('/api/images', async (req, res) => {
     try {
         const authClient = await authorize();
