@@ -75,7 +75,7 @@ app.get('/api/images', async (req, res) => {
         const fileUrls = imageFiles.map(file => ({
             id: file.id,
             name: file.name,
-            url: file.webViewLink // Use the webViewLink property from Google Drive metadata
+            url: file.webViewLink || file.webContentLink // Use either webViewLink or webContentLink
         }));
 
         res.json(fileUrls);
@@ -84,6 +84,7 @@ app.get('/api/images', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 // Serve the images statically from the images directory
 app.use('/images', express.static(IMAGES_DIR));
