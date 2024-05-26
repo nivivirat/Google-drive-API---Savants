@@ -88,10 +88,5 @@ app.get('/api/images', async (req, res) => {
 // Serve the images statically from the images directory
 app.use('/images', express.static(IMAGES_DIR));
 
-// Wrap the Express app with aws-serverless-express
-const server = awsServerlessExpress.createServer(app);
-
-// Export the handler function for AWS Lambda
-exports.handler = (event, context) => {
-    awsServerlessExpress.proxy(server, event, context);
-};
+// Export the Express.js app
+module.exports = app;
