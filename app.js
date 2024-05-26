@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
-const apikeys = require('./api.json');
+require('dotenv').config(); // Load environment variables from .env file
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
 const fs = require('fs');
 const path = require('path');
@@ -18,9 +18,9 @@ if (!fs.existsSync(IMAGES_DIR)) {
 
 async function authorize() {
     const jwtClient = new google.auth.JWT(
-        apikeys.client_email,
+        process.env.CLIENT_EMAIL,
         null,
-        apikeys.private_key,
+        process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
         SCOPE
     );
     await jwtClient.authorize();
@@ -59,7 +59,7 @@ async function downloadFile(authClient, fileId, dest) {
 app.get('/api/images', async (req, res) => {
     try {
         const authClient = await authorize();
-        const folderId = '1l2wv2kbFj4J7-LVTVfH7_T0ECvJAbsXm'; // Replace with your folder's ID
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // Replace with your folder's ID
         const imageFiles = await listFiles(authClient, folderId);
 
         // Download each file to the local images directory
