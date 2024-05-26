@@ -9,7 +9,12 @@ require('dotenv').config(); // Load environment variables from .env file
 const app = express();
 app.use(cors());
 
-const IMAGES_DIR = path.join(__dirname, 'images');
+const IMAGES_DIR = '/tmp/images';
+
+// Create the images directory if it doesn't exist
+if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR);
+}
 
 // Create the images directory if it doesn't exist
 if (!fs.existsSync(IMAGES_DIR)) {
@@ -66,19 +71,14 @@ app.get('/api/images', async (req, res) => {
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // Replace with your folder's ID
         const imageFiles = await listFiles(authClient, folderId);
 
-        // Download each file to the local images directory
-        for (const file of imageFiles) {
-            const dest = path.join(IMAGES_DIR, file.name);
-            if (!fs.existsSync(dest)) {
-                await downloadFile(authClient, file.id, dest);
-            }
-        }
-
-        res.json(imageFiles.map(file => ({
+        // Map the imageFiles array to include the shareable link
+        const fileUrls = imageFiles.map(file => ({
             id: file.id,
             name: file.name,
-            url: `http://localhost:3001/images/${file.name}`
-        })));
+            url: file.webViewLink // Use the webViewLink property from Google Drive metadata
+        }));
+
+        res.json(fileUrls);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal Server Error' });
