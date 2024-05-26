@@ -58,7 +58,7 @@ async function downloadFile(authClient, fileId, dest) {
 app.get('/api/images', async (req, res) => {
     try {
         const authClient = await authorize();
-        const folderId = '1l2wv2kbFj4J7-LVTVfH7_T0ECvJAbsXm'; // Replace with your folder's ID
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // Replace with your folder's ID
         const imageFiles = await listFiles(authClient, folderId);
 
         // Download each file to the local images directory
