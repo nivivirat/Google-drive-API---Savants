@@ -7,16 +7,15 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
+// Enable CORS for the Vite React app
 app.use(cors({
-    origin: 'http://localhost:5173/photos' // Replace this with your frontend's origin
-  }));  
-
-const IMAGES_DIR = '/tmp/images'; // Store images in /tmp directory for AWS Lambda
-
-// Create the images directory if it doesn't exist
-if (!fs.existsSync(IMAGES_DIR)) {
-    fs.mkdirSync(IMAGES_DIR);
-}
+    origin: 'http://localhost:5173', // Allow requests from the Vite React app
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  }));
+  app.use(express.json()); // Use JSON middleware to parse incoming JSON data
+  
+  // Serve the static React build files
+  app.use(express.static(path.join(__dirname, './', 'client', 'dist')));
 
 async function authorize() {
     const jwtClient = new google.auth.JWT(
@@ -38,48 +37,56 @@ async function listFiles(authClient, folderId) {
     return res.data.files;
 }
 
-async function downloadFile(authClient, fileId, dest) {
-    const drive = google.drive({ version: 'v3', auth: authClient });
-    const destStream = fs.createWriteStream(dest);
-    await drive.files.get(
-        { fileId, alt: 'media' },
-        { responseType: 'stream' },
-        (err, res) => {
-            if (err) return console.error('Error downloading file:', err);
-            res.data
-                .on('end', () => {
-                    console.log('Downloaded file:', dest);
-                })
-                .on('error', (err) => {
-                    console.error('Error downloading file:', err);
-                })
-                .pipe(destStream);
-        }
-    );
-}
-
-app.get('/api/images', async (req, res) => {
+async function fetchImagesByFolderId(folderId) {
     try {
         const authClient = await authorize();
-        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID; // Replace with your folder's ID
-        const imageFiles = await listFiles(authClient, folderId);
+        let imageFiles = await listFiles(authClient, folderId);
+        imageFiles = imageFiles.sort((a, b) => a.name.localeCompare(b.name));
+        return imageFiles;
+    } catch (error) {
+        console.error('Error fetching images:', error);
+        throw new Error('Internal Server Error');
+    }
+}
 
-        // Download each file to the local images directory
-        for (const file of imageFiles) {
-            const dest = path.join(IMAGES_DIR, file.name);
-            if (!fs.existsSync(dest)) {
-                await downloadFile(authClient, file.id, dest);
-            }
-        }
-
+app.get('/api/images/day1', async (req, res) => {
+    try {
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_DAY1;
+        const imageFiles = await fetchImagesByFolderId(folderId);
         res.json(imageFiles);
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: error.message });
     }
 });
 
-// Serve the images statically from the images directory
-app.use('/images', express.static(IMAGES_DIR));
+app.get('/api/images/day2', async (req, res) => {
+    try {
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_DAY2;
+        const imageFiles = await fetchImagesByFolderId(folderId);
+        res.json(imageFiles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/images/carousel', async (req, res) => {
+    try {
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_CAROUSEL;
+        const imageFiles = await fetchImagesByFolderId(folderId);
+        res.json(imageFiles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+const PORT = 3001;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './', 'client', 'dist', 'index.html'));
+  });
 
 module.exports = app; // Export the Express app for serverless deployment
