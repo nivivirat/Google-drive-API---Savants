@@ -7,8 +7,6 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-// Enable CORS for the Vite React app
-const cors = require("cors");
 
 app.use(cors());
 
