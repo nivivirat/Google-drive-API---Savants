@@ -4,15 +4,16 @@
     {
       "src": "app.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "client/dist/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
-    { "src": "/api/images/day1", "dest": "/app.js" },
-    { "src": "/api/images/day2", "dest": "/app.js" },
-    { "src": "/api/images/carousel", "dest": "/app.js" },
     {
       "src": "/(.*)",
-      "dest": "/client/dist/index.html"
+      "dest": "app.js"
     }
   ]
 }
