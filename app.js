@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { google } = require("googleapis");
-require("dotenv").config(); // Load environment variables from .env file
+// require("dotenv").config(); // Load environment variables from .env file
 const SCOPE = ["https://www.googleapis.com/auth/drive"];
 const fs = require("fs");
 const path = require("path");
@@ -69,6 +69,14 @@ app.get("/api/images/carousel", async (req, res) => {
     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_CAROUSEL;
     const imageFiles = await fetchImagesByFolderId(folderId);
     res.json(imageFiles);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/images", async (req, res) => {
+  try {
+    res.json(process.env);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
