@@ -74,14 +74,6 @@ app.get("/api/images/carousel", async (req, res) => {
   }
 });
 
-app.get("/api/images", async (req, res) => {
-  try {
-    res.json(process.env);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 const PORT = 3001;
 
 app.listen(PORT, () => {
