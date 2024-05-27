@@ -7,7 +7,6 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-
 app.use(cors());
 
 // Serve the static React build files
